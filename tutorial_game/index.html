@@ -15,12 +15,14 @@
     <script type="text/javascript">
         //Game container basically
         var game = new Phaser.Game(800, 600, Phaser.AUTO, '', {preload: preload, create: create, update: update});
+        var badGuy;
         var player;
         var platforms;
         var cursors;
         var stars;
         var score = 0;
         var scoreText;
+        var goingLeft = true;
         //function that preloads images
         function preload()
         {
@@ -28,6 +30,7 @@
             game.load.image('ground', 'assets/platform.png');
             game.load.image('star', 'assets/star.png');
             game.load.spritesheet('dude', 'assets/dude.png', 32, 48);
+            game.load.spritesheet('badDude', 'assets/baddie.png', 32, 32);
         }
 
         //function that creates/adds the items to the game container
@@ -81,6 +84,14 @@
             }
 
             scoreText = game.add.text(16,16,'Score: 0', {fontSize: '32px', fill:'#000'});
+
+            badGuy = game.add.sprite(250, game.world.height - 100, 'badDude');
+            game.physics.arcade.enable(badGuy);
+            badGuy.body.collideWorldBounds = true;
+            badGuy.body.bounce.y = 0.2;
+            badGuy.body.gravity.y = 300;
+            badGuy.animations.add('left', [0, 1], 10, true);
+            badGuy.animations.add('right', [2, 3], 10, true);
         }
 
         function update()
@@ -89,8 +100,30 @@
             game.physics.arcade.collide(player, platforms);
             game.physics.arcade.collide(stars, platforms);
             game.physics.arcade.overlap(player, stars, collectStar, null, this);
+            game.physics.arcade.collide(badGuy, platforms);
             //  Reset the players velocity (movement)
             player.body.velocity.x = 0;
+
+
+            if(goingLeft)
+            {
+                if(badGuy.body.position.x == 0)
+                {
+                    goingLeft = false;
+                }
+                badGuy.body.velocity.x = -140;
+                badGuy.animations.play('left');
+            }
+
+            if(!goingLeft)
+            {
+                if(badGuy.body.position.x >= 750)
+                {
+                    goingLeft = true;
+                }
+                badGuy.body.velocity.x = 140;
+                badGuy.animations.play('right');
+            }
 
             if (cursors.left.isDown)
             {
@@ -123,7 +156,6 @@
 
         function collectStar (player, star)
         {
-
             // Removes the star from the screen
             star.kill();
             score += 10;
