@@ -15,13 +15,14 @@
     <script type="text/javascript">
         //Game container basically
         var game = new Phaser.Game(800, 600, Phaser.AUTO, '', {preload: preload, create: create, update: update});
-        var badGuy;
+        var badGuys;
         var player;
         var platforms;
         var cursors;
         var stars;
         var score = 0;
         var scoreText;
+        var invulnerable = 0;
         var goingLeft = true;
         //function that preloads images
         function preload()
@@ -85,13 +86,19 @@
 
             scoreText = game.add.text(16,16,'Score: 0', {fontSize: '32px', fill:'#000'});
 
-            badGuy = game.add.sprite(250, game.world.height - 100, 'badDude');
-            game.physics.arcade.enable(badGuy);
-            badGuy.body.collideWorldBounds = true;
-            badGuy.body.bounce.y = 0.2;
-            badGuy.body.gravity.y = 300;
-            badGuy.animations.add('left', [0, 1], 10, true);
-            badGuy.animations.add('right', [2, 3], 10, true);
+            badGuys = game.add.group();
+            badGuys.enableBody = true
+
+            for(var i = 0; i < 5; i++)
+            {
+                var badGuy = badGuys.create(i*170,0,'badDude');
+                badGuy.body.gravity.y = 300;
+                badGuy.body.collideWorldBounds = true;
+                badGuy.animations.add('left', [0, 1], 10, true);
+                badGuy.animations.add('right', [2, 3], 10, true);
+            }
+            
+            
         }
 
         function update()
@@ -100,29 +107,30 @@
             game.physics.arcade.collide(player, platforms);
             game.physics.arcade.collide(stars, platforms);
             game.physics.arcade.overlap(player, stars, collectStar, null, this);
-            game.physics.arcade.collide(badGuy, platforms);
+            game.physics.arcade.collide(badGuys, platforms);
+            game.physics.arcade.overlap(player, badGuys, hitBadGuy, null, this);
             //  Reset the players velocity (movement)
             player.body.velocity.x = 0;
 
 
             if(goingLeft)
             {
-                if(badGuy.body.position.x == 0)
+                if(badGuys.children[2].body.position.x == 0)
                 {
                     goingLeft = false;
                 }
-                badGuy.body.velocity.x = -140;
-                badGuy.animations.play('left');
+                badGuys.children[2].body.velocity.x = -140;
+                badGuys.children[2].animations.play('left');
             }
 
             if(!goingLeft)
             {
-                if(badGuy.body.position.x >= 750)
+                if(badGuys.children[2].body.position.x >= 750)
                 {
                     goingLeft = true;
                 }
-                badGuy.body.velocity.x = 140;
-                badGuy.animations.play('right');
+                badGuys.children[2].body.velocity.x = 140;
+                badGuys.children[2].animations.play('right');
             }
 
             if (cursors.left.isDown)
@@ -152,6 +160,14 @@
             {
                 player.body.velocity.y = -320;
             }
+            if(cursors.down.isDown)
+            {
+                player.body.gravity.y = 600;
+            }
+            else
+            {
+                player.body.gravity.y = 300;
+            }
         }
 
         function collectStar (player, star)
@@ -161,6 +177,18 @@
             score += 10;
             scoreText.text = 'Score: ' + score;
         }
+        
+        function hitBadGuy (player, badGuys)
+        {
+
+            if (game.time.now - invulnerable > 2000)  {
+
+                score -= 10;
+                scoreText.text = 'Score: ' + score;
+                invulnerable = game.time.now;
+            }
+        }
+
     </script>
 </body>
 </html>
